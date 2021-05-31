@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  monitor:
+    build: .
+    container_name: monitor
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+    restart: always
+    networks:
+      - mina_network
+
+networks:
+  mina_network:
+    external: true
+    name: "mina_network"
