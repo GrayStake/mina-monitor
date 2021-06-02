@@ -84,10 +84,19 @@ def check_mina_node_status():
             STATUS_COUNT[sync_status] += 1
             
             if STATUS_COUNT['CATCHUP'] > 5:
-                logging.debug("Node has been too long in the CATHUP state.")
+                logging.debug("Node has been too long in the CATHUP state (more than X minutes).")
                 raise NodeOutOfSyncException()
             
-            logging.debug("Node is synced.")
+            if STATUS_COUNT['BOOTSTRAP'] > 240:
+                logging.error("Node has been too long in the BOOTSTRAP state (more than 20 minutes).")
+                raise NodeOutOfSyncException()
+
+            if sync_status == 'BOOTSTRAP':
+                logging.debug("Node is bootstrapping...")
+                return
+
+            logging.info("Node is synced.")
+            
             logging.debug(sync_status)
             return
         
