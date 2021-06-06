@@ -79,14 +79,21 @@ def check_mina_node_status():
             highest_block = response['highestBlockLengthReceived']
             # Highest unvalidated block
             highest_unvalidated_block = response['highestUnvalidatedBlockLengthReceived']
+            # Compute difference between unvalidated and validated blocks
+            blocks_validated_diff = highest_unvalidated_block - highest_block
 
             # Increment status count
             STATUS_COUNT[sync_status] += 1
-            
-            if STATUS_COUNT['CATCHUP'] > 5:
-                logging.debug("Node has been too long in the CATHUP state (more than X minutes).")
+            logging.debug(STATUS_COUNT)
+
+            if STATUS_COUNT['CONNECTING'] > 60:
+                logging.error("Node has been too long in the CONNECTING state. (more than 5 minutes")
                 raise NodeOutOfSyncException()
-            
+
+            if STATUS_COUNT['CATCHUP'] > 540:
+                logging.debug("Node has been too long in the CATHUP state (more than 45 minutes).")
+                raise NodeOutOfSyncException()
+
             if STATUS_COUNT['BOOTSTRAP'] > 240:
                 logging.error("Node has been too long in the BOOTSTRAP state (more than 20 minutes).")
                 raise NodeOutOfSyncException()
@@ -95,15 +102,17 @@ def check_mina_node_status():
                 logging.debug("Node is bootstrapping...")
                 return
 
+            if blocks_validated_diff > 2:
+                logging.error("Difference between highest validated block and highest unvalidated block. (delta > 2)")
+                raise NodeOutOfSyncException()
+
             logging.info("Node is synced.")
-            
-            logging.debug(sync_status)
             return
-        
+
         # Retry
         retry_count += 1
         logging.debug("Node status check failed. Retrying...")
-    
+
     # Raise NodeOutOfSyncException in order to restart the node
     raise NodeOutOfSyncException()
 
@@ -113,9 +122,9 @@ def restart_node():
 
     for item in client.containers.list():
         if item.name == 'node':
-            item.restart()
+            item.stop()
             break
-        
+
     STATUS_COUNT = INITIAL_STATUS_COUNT
 
 def start_monitor():
@@ -126,6 +135,7 @@ def start_monitor():
         try:
             check_mina_node_status()
         except NodeOutOfSyncException:
+            OUTOFSYNC_COUNT += 1
             logging.error("Node is out of sync. (OUTOFSYNC_COUNT={})".format(OUTOFSYNC_COUNT))
             restart_node()
             sleep(30)
