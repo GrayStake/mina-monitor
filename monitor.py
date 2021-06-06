@@ -121,7 +121,7 @@ def restart_node():
     logging.debug("Restarting node")
 
     for item in client.containers.list():
-        if item.name == 'node':
+        if item.name == 'node' or item.name == 'sidecar':
             item.stop()
             break
 
