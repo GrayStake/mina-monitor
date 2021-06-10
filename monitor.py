@@ -154,7 +154,6 @@ def restart_node():
     for item in client.containers.list():
         if "node" in item.name or "sidecar" in item.name:
             item.stop()
-            break
 
     STATUS_COUNT = INITIAL_STATUS_COUNT
 
