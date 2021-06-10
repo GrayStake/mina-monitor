@@ -43,7 +43,7 @@ def check_mina_node_status():
     global MAX_RETRY_COUNT
     global GRAPHQL_URI
     global STATUS_COUNT
-    
+
     retry_count = 0
 
     while retry_count < MAX_RETRY_COUNT:
@@ -152,7 +152,7 @@ def restart_node():
     global client
 
     for item in client.containers.list():
-        if item.name == "node" or item.name == "sidecar":
+        if "node" in item.name or "sidecar" in item.name:
             item.stop()
             break
 
